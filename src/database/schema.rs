@@ -39,7 +39,7 @@ pub async fn define_tables(db: &Database) -> Result<()> {
         DEFINE INDEX idx_log_skill ON TABLE audit_logs FIELDS skill_id;
         DEFINE INDEX idx_log_action ON TABLE audit_logs FIELDS action;
         "#,
-    ).await?;
+    ).await?.check()?;
     
     Ok(())
 }
@@ -53,7 +53,7 @@ pub async fn drop_tables(db: &Database) -> Result<()> {
         REMOVE TABLE risk_findings;
         REMOVE TABLE audit_logs;
         "#,
-    ).await?;
+    ).await?.check()?;
     
     Ok(())
 }
@@ -67,7 +67,7 @@ pub async fn clear_data(db: &Database) -> Result<()> {
         DELETE risk_findings;
         DELETE audit_logs;
         "#,
-    ).await?;
+    ).await?.check()?;
     
     Ok(())
 }

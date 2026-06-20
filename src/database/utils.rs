@@ -4,30 +4,33 @@ use anyhow::Result;
 use std::collections::HashMap;
 
 /// Utility functions for database operations
+/// These functions have been moved to queries.rs to fix trait bound issues with SurrealDB
+/// This file exists to maintain the module structure and can be used for future utility functions
 impl Database {
     /// Counts total skills in the database
     pub async fn count_skills(&self) -> Result<usize> {
-        let result: Vec<(i64,)> = self.db.query("SELECT count() FROM ai_skills").await?.take(0)?;
+        let result: Vec<(i64,)> = self.db.query("SELECT count() FROM ai_skills").await?.check()?.take(0)?;
         Ok(result.first().map(|r| r.0 as usize).unwrap_or(0))
     }
 
     /// Counts total risk findings in the database
     pub async fn count_findings(&self) -> Result<usize> {
-        let result: Vec<(i64,)> = self.db.query("SELECT count() FROM risk_findings").await?.take(0)?;
+        let result: Vec<(i64,)> = self.db.query("SELECT count() FROM risk_findings").await?.check()?.take(0)?;
         Ok(result.first().map(|r| r.0 as usize).unwrap_or(0))
     }
 
     /// Counts total audit logs in the database
     pub async fn count_audit_logs(&self) -> Result<usize> {
-        let result: Vec<(i64,)> = self.db.query("SELECT count() FROM audit_logs").await?.take(0)?;
+        let result: Vec<(i64,)> = self.db.query("SELECT count() FROM audit_logs").await?.check()?.take(0)?;
         Ok(result.first().map(|r| r.0 as usize).unwrap_or(0))
     }
 
     /// Checks if a skill exists by ID
     pub async fn skill_exists(&self, id: &str) -> Result<bool> {
-        let result: Vec<AISkill> = self.db.query("SELECT id FROM ai_skills WHERE id = $id")
+        let result: Vec<AISkill> = self.db.query("SELECT * FROM ai_skills WHERE id = $id")
             .bind(("id", id))
             .await?
+            .check()?
             .take(0)?;
         Ok(!result.is_empty())
     }
@@ -40,7 +43,7 @@ impl Database {
             WHERE array::some(risks[*].severity, "critical") 
                OR array::some(risks[*].severity, "high")
             "#
-        ).await?.take(0)?;
+        ).await?.check()?.take(0)?;
         Ok(skills)
     }
 
@@ -48,7 +51,7 @@ impl Database {
     pub async fn get_skills_by_risk_count(&self, descending: bool) -> Result<Vec<AISkill>> {
         let order = if descending { "DESC" } else { "ASC" };
         let query = format!("SELECT * FROM ai_skills ORDER BY array::len(risks) {}", order);
-        let skills: Vec<AISkill> = self.db.query(query).await?.take(0)?;
+        let skills: Vec<AISkill> = self.db.query(query).await?.check()?.take(0)?;
         Ok(skills)
     }
 
@@ -60,6 +63,7 @@ impl Database {
         let skills: Vec<AISkill> = self.db.query(search_query)
             .bind(("query", query))
             .await?
+            .check()?
             .take(0)?;
         Ok(skills)
     }
@@ -76,6 +80,7 @@ impl Database {
         .bind(("start", start_time))
         .bind(("end", end_time))
         .await?
+        .check()?
         .take(0)?;
         Ok(skills)
     }
@@ -94,7 +99,7 @@ impl Database {
             FROM risk_findings
             GROUP BY risk_type, severity
             "#
-        ).await?.take(0)?;
+        ).await?.check()?.take(0)?;
         
         for (risk_type, severity, count) in results {
             analysis.entry(risk_type)
@@ -109,7 +114,7 @@ impl Database {
     pub async fn get_top_risky_skills(&self, n: usize) -> Result<Vec<AISkill>> {
         let skills: Vec<AISkill> = self.db.query(
             format!("SELECT * FROM ai_skills ORDER BY array::len(risks) DESC LIMIT {}", n)
-        ).await?.take(0)?;
+        ).await?.check()?.take(0)?;
         Ok(skills)
     }
 
@@ -124,7 +129,7 @@ impl Database {
             GROUP BY time::day(timestamp)
             ORDER BY day
             "#
-        ).await?.take(0)?;
+        ).await?.check()?.take(0)?;
         Ok(trends)
     }
 
@@ -194,6 +199,7 @@ impl Database {
         )
         .bind(("cutoff", cutoff_date))
         .await?
+        .check()?
         .take(0)?;
 
         let deleted_count = result.first().map(|r| r.0 as usize).unwrap_or(0);
