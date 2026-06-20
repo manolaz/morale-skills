@@ -40,6 +40,7 @@ impl NetworkChecker {
                                 severity: severity.clone(),
                                 description: format!("Network activity pattern found: {}", pattern),
                                 evidence: format!("Pattern '{}' found in file {}", pattern, file_path.display()),
+                                location: Some(file_path.display().to_string()),
                                 timestamp: chrono::Utc::now(),
                             });
                         }

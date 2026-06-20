@@ -37,6 +37,7 @@ impl ContextPoisoningChecker {
                                 severity: severity.clone(),
                                 description: format!("Potential context management found: {}", pattern),
                                 evidence: format!("Pattern '{}' found in file {}", pattern, file_path.display()),
+                                location: Some(file_path.display().to_string()),
                                 timestamp: chrono::Utc::now(),
                             });
                         }
@@ -50,6 +51,7 @@ impl ContextPoisoningChecker {
                             severity: Severity::High,
                             description: "Potential unsafe data retention without sanitization".to_string(),
                             evidence: format!("Found 'store' with 'input/user' in {}", file_path.display()),
+                            location: Some(file_path.display().to_string()),
                             timestamp: chrono::Utc::now(),
                         });
                     }

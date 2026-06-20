@@ -18,6 +18,7 @@ impl SupplyChainChecker {
                 severity: Severity::High,
                 description: "Skill originates from untrusted source".to_string(),
                 evidence: format!("Path contains suspicious indicators: {}", path),
+                location: None,
                 timestamp: chrono::Utc::now(),
             });
         }
@@ -51,6 +52,7 @@ impl SupplyChainChecker {
                                 severity: Severity::Medium,
                                 description: format!("Potentially risky package/function found in {}: {}", file, pkg),
                                 evidence: format!("Found '{}' in {}", pkg, full_path.display()),
+                                location: Some(full_path.display().to_string()),
                                 timestamp: chrono::Utc::now(),
                             });
                         }
@@ -99,6 +101,7 @@ impl NetworkChecker {
                                 severity: severity.clone(),
                                 description: format!("Network activity pattern found: {}", pattern),
                                 evidence: format!("Pattern '{}' found in file {}", pattern, file_path.display()),
+                                location: Some(file_path.display().to_string()),
                                 timestamp: chrono::Utc::now(),
                             });
                         }
@@ -144,6 +147,7 @@ impl ContextPoisoningChecker {
                                 severity: severity.clone(),
                                 description: format!("Potential context management found: {}", pattern),
                                 evidence: format!("Pattern '{}' found in file {}", pattern, file_path.display()),
+                                location: Some(file_path.display().to_string()),
                                 timestamp: chrono::Utc::now(),
                             });
                         }
@@ -157,6 +161,7 @@ impl ContextPoisoningChecker {
                             severity: Severity::High,
                             description: "Potential unsafe data retention without sanitization".to_string(),
                             evidence: format!("Found 'store' with 'input/user' in {}", file_path.display()),
+                            location: Some(file_path.display().to_string()),
                             timestamp: chrono::Utc::now(),
                         });
                     }
@@ -203,6 +208,7 @@ impl PromptInjectionChecker {
                                 severity: severity.clone(),
                                 description: format!("Potential prompt injection vulnerability: {}", pattern),
                                 evidence: format!("Pattern '{}' found near prompt-related code in {}", pattern, file_path.display()),
+                                location: Some(file_path.display().to_string()),
                                 timestamp: chrono::Utc::now(),
                             });
                         }
@@ -217,6 +223,7 @@ impl PromptInjectionChecker {
                             severity: Severity::High,
                             description: "Missing input sanitization for user data".to_string(),
                             evidence: format!("Unsanitized user input in {}", file_path.display()),
+                            location: Some(file_path.display().to_string()),
                             timestamp: chrono::Utc::now(),
                         });
                     }
@@ -228,14 +235,12 @@ impl PromptInjectionChecker {
     }
 }
 
-// This module re-exports all risk checker implementations from the risks submodule
-pub use crate::risks::{
-    SupplyChainChecker, 
-    NetworkChecker, 
-    ContextPoisoningChecker, 
-    PromptInjectionChecker,
-    AIAnalyzer
-};
+// Re-export the risk checkers from the risks module
+pub use crate::risks::SupplyChainChecker;
+pub use crate::risks::NetworkChecker;
+pub use crate::risks::ContextPoisoningChecker;
+pub use crate::risks::PromptInjectionChecker;
+pub use crate::risks::AIAnalyzer;
 
 // Common utilities used by risk checkers
 pub use crate::risks::utils::is_text_file;

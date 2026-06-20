@@ -102,26 +102,26 @@ pub enum Severity {
     Critical,
 }
 
-impl ToString for RiskType {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for RiskType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RiskType::SupplyChain => "Supply Chain".to_string(),
-            RiskType::Network => "Network".to_string(),
-            RiskType::ContextPoisoning => "Context Poisoning".to_string(),
-            RiskType::PromptInjection => "Prompt Injection".to_string(),
-            RiskType::AIBased => "AI-Based Analysis".to_string(),
-            RiskType::Other(s) => s.clone(),
+            RiskType::SupplyChain => write!(f, "Supply Chain"),
+            RiskType::Network => write!(f, "Network"),
+            RiskType::ContextPoisoning => write!(f, "Context Poisoning"),
+            RiskType::PromptInjection => write!(f, "Prompt Injection"),
+            RiskType::AIBased => write!(f, "AI-Based Analysis"),
+            RiskType::Other(s) => write!(f, "{}", s),
         }
     }
 }
 
-impl ToString for Severity {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for Severity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Severity::Low => "Low".to_string(),
-            Severity::Medium => "Medium".to_string(),
-            Severity::High => "High".to_string(),
-            Severity::Critical => "Critical".to_string(),
+            Severity::Low => write!(f, "Low"),
+            Severity::Medium => write!(f, "Medium"),
+            Severity::High => write!(f, "High"),
+            Severity::Critical => write!(f, "Critical"),
         }
     }
 }

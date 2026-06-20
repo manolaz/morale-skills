@@ -223,6 +223,7 @@ async fn parse_ai_response(response: String, default_risk_type: RiskType) -> Res
                 severity,
                 description,
                 evidence,
+                location: None, // Location is unknown for AI-generated findings
                 timestamp: chrono::Utc::now(),
             });
         }
@@ -236,6 +237,7 @@ async fn parse_ai_response(response: String, default_risk_type: RiskType) -> Res
             severity: Severity::Medium,
             description: "AI analysis completed".to_string(),
             evidence: response,
+            location: None, // Location is unknown for AI-generated findings
             timestamp: chrono::Utc::now(),
         }])
     }

@@ -39,6 +39,7 @@ impl PromptInjectionChecker {
                                 severity: severity.clone(),
                                 description: format!("Potential prompt injection vulnerability: {}", pattern),
                                 evidence: format!("Pattern '{}' found near prompt-related code in {}", pattern, file_path.display()),
+                                location: Some(file_path.display().to_string()),
                                 timestamp: chrono::Utc::now(),
                             });
                         }
@@ -53,6 +54,7 @@ impl PromptInjectionChecker {
                             severity: Severity::High,
                             description: "Missing input sanitization for user data".to_string(),
                             evidence: format!("Unsanitized user input in {}", file_path.display()),
+                            location: Some(file_path.display().to_string()),
                             timestamp: chrono::Utc::now(),
                         });
                     }
