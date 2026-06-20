@@ -118,19 +118,5 @@ impl Database {
         Ok(skills)
     }
 
-    /// Gets risk trends over time
-    pub async fn get_risk_trends(&self) -> Result<Vec<(String, i64)>> {
-        let trends: Vec<(String, i64)> = self.db.query(
-            r#"
-            SELECT 
-                time::day(timestamp) as day,
-                count() as count
-            FROM risk_findings
-            GROUP BY time::day(timestamp)
-            ORDER BY day
-            "#
-        ).await?.check()?.take(0)?;
-        Ok(trends)
-    }
-
+    // Removed duplicate get_risk_trends function since it's defined in queries.rs
 }
