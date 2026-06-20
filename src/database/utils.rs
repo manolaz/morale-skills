@@ -191,18 +191,4 @@ impl Database {
         Ok(())
     }
 
-    /// Cleans up old audit logs older than specified days
-    pub async fn cleanup_old_logs(&self, days: i64) -> Result<usize> {
-        let cutoff_date = chrono::Utc::now() - chrono::Duration::days(days);
-        let result: Vec<(i64,)> = self.db.query(
-            "DELETE FROM audit_logs WHERE timestamp < $cutoff RETURN AFTER"
-        )
-        .bind(("cutoff", cutoff_date))
-        .await?
-        .check()?
-        .take(0)?;
-
-        let deleted_count = result.first().map(|r| r.0 as usize).unwrap_or(0);
-        Ok(deleted_count)
-    }
 }
