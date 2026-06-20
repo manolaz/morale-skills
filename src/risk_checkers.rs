@@ -228,7 +228,7 @@ impl PromptInjectionChecker {
     }
 }
 
-// Re-export risk checkers from the modular structure
+// This module re-exports all risk checker implementations from the risks submodule
 pub use crate::risks::{
     SupplyChainChecker, 
     NetworkChecker, 
@@ -237,13 +237,5 @@ pub use crate::risks::{
     AIAnalyzer
 };
 
-// Keep the is_text_file helper function here since multiple modules used it
-use std::path::Path;
-
-// Helper function to determine if a file is likely a text file
-pub fn is_text_file(path: &Path) -> bool {
-    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
-    let text_extensions = ["txt", "py", "js", "ts", "json", "yaml", "yml", "md", "html", "css", "rs", "go", "java", "cpp", "c"];
-    
-    text_extensions.contains(&ext)
-}
+// Common utilities used by risk checkers
+pub use crate::risks::utils::is_text_file;

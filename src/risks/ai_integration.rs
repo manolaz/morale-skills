@@ -2,6 +2,8 @@ use crate::models::{RiskFinding, RiskType, Severity};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use reqwest;
+use serde_json;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct APIRequest {

@@ -2,6 +2,7 @@ use crate::models::{RiskFinding, RiskType, Severity};
 use anyhow::Result;
 use std::path::Path;
 use std::fs;
+use regex::Regex;
 
 pub struct SupplyChainChecker;
 
@@ -42,17 +43,15 @@ impl SupplyChainChecker {
                         "os.system", "os.popen", "subprocess.run", "subprocess.Popen"
                     ];
                     
-                    for pkg in &risky_packages {
-                        if content.contains(pkg) {
-                            findings.push(RiskFinding {
-                                id: uuid::Uuid::new_v4().to_string(),
-                                risk_type: RiskType::SupplyChain,
-                                severity: Severity::Medium,
-                                description: format!("Potentially risky package/function found in {}: {}", file, pkg),
-                                evidence: format!("Found '{}' in {}", pkg, full_path.display()),
-                                timestamp: chrono::Utc::now(),
-                            });
-                        }
+                    if let Some(matched) = re.find(content) {
+                        findings.push(RiskFinding {
+                            id: uuid::Uuid::new_v4().to_string(),
+                            risk_type: RiskType::SupplyChain,
+                            severity: Severity::Medium,
+                            description: format!("Potentially risky package/function found in {}: {}", file, matched.as_str()),
+                            evidence: format!("Found '{}' in {}", matched.as_str(), full_path.display()),
+                            timestamp: chrono::Utc::now(),
+                        });
                     }
                 }
             }
