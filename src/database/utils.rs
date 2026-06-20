@@ -133,17 +133,4 @@ impl Database {
         Ok(trends)
     }
 
-    /// Exports all data as JSON for backup purposes
-    pub async fn export_all_data(&self) -> Result<serde_json::Value> {
-        let skills = self.get_all_skills().await?;
-        let findings: Vec<RiskFinding> = self.db.select("risk_findings").await?;
-        let logs: Vec<AuditLog> = self.db.select("audit_logs").await?;
-
-        Ok(serde_json::json!({
-            "skills": skills,
-            "findings": findings,
-            "logs": logs
-        }))
-    }
-
 }
