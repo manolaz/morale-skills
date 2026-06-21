@@ -18,6 +18,8 @@ impl Database {
         let created_skill: AISkill = self.db.create("ai_skills")
             .content(skill)
             .await?
+            .into_iter()
+            .next()
             .ok_or(anyhow::anyhow!("Failed to create skill record"))?;
         
         // Log the creation
@@ -34,6 +36,8 @@ impl Database {
         let updated_skill: AISkill = self.db.update(("ai_skills", id))
             .content(skill)
             .await?
+            .into_iter()
+            .next()
             .ok_or(anyhow::anyhow!("Failed to update skill record"))?;
         
         self.log_audit_event(id, "skill_updated", &serde_json::json!({
@@ -115,10 +119,9 @@ impl Database {
         skill.risks.push(finding.clone());
         
         // Update the skill in the database
-        self.db.update(("ai_skills", skill_id))
+        let _: Option<AISkill> = self.db.update(("ai_skills", skill_id))
             .content(skill)
-            .await?
-            .ok_or(anyhow::anyhow!("Failed to update skill with new finding"))?;
+            .await?;
         
         // Also store the finding separately for easier querying
         let stored_finding: RiskFinding = self.db.create("risk_findings")
@@ -131,6 +134,8 @@ impl Database {
                 "location": finding.location.unwrap_or_default()
             }))
             .await?
+            .into_iter()
+            .next()
             .ok_or(anyhow::anyhow!("Failed to create risk finding record"))?;
         
         self.log_audit_event(skill_id, "finding_added", &serde_json::json!({
@@ -407,14 +412,14 @@ impl Database {
             for skill_value in skills_array {
                 if let Ok(skill) = serde_json::from_value::<AISkill>(skill_value.clone()) {
                     // Try to update if exists, otherwise create
-                    match self.get_skill(&skill.id).await? {
+                    match self.get_skill(&skill.id.to_string()).await? {
                         Some(_) => {
-                            self.db.update(("ai_skills", &skill.id))
+                                let _: Option<AISkill> = self.db.update(("ai_skills", skill.id.to_string()))
                                 .content(skill)
                                 .await?;
                         },
                         None => {
-                            self.db.create("ai_skills")
+                            let _: Vec<AISkill> = self.db.create("ai_skills")
                                 .content(skill)
                                 .await?;
                         }
@@ -426,7 +431,7 @@ impl Database {
         if let Some(findings_array) = data.get("findings").and_then(|v| v.as_array()) {
             for finding_value in findings_array {
                 if let Ok(finding) = serde_json::from_value::<RiskFinding>(finding_value.clone()) {
-                    self.db.create("risk_findings")
+                    let _: Vec<RiskFinding> = self.db.create("risk_findings")
                         .content(finding)
                         .await?;
                 }
@@ -436,7 +441,7 @@ impl Database {
         if let Some(logs_array) = data.get("logs").and_then(|v| v.as_array()) {
             for log_value in logs_array {
                 if let Ok(log) = serde_json::from_value::<AuditLog>(log_value.clone()) {
-                    self.db.create("audit_logs")
+                    let _: Vec<AuditLog> = self.db.create("audit_logs")
                         .content(log)
                         .await?;
                 }
@@ -464,8 +469,9 @@ impl Database {
     // === Audit Log Operations ===
     
     /// Logs an audit event
-    pub async fn log_audit_event(&self, skill_id: &str, action: &str, details: &serde_json::Value) -> Result<()> {
-        let _: Vec<crate::models::AuditLog> = self.db.create("audit_logs")
+    pub async fn log_audit_event(&self, skill_id: impl std::fmt::Display, action: &str, details: &serde_json::Value) -> Result<()> {
+        let skill_id = skill_id.to_string();
+        let _: Vec<serde_json::Value> = self.db.create("audit_logs")
             .content(serde_json::json!({
                 "skill_id": format!("ai_skills:{}", skill_id),
                 "action": action,

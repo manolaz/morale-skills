@@ -6,7 +6,7 @@ use uuid::Uuid;
 /// Represents an AI Skill being audited
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AISkill {
-    pub id: String,
+    pub id: Thing,
     pub name: String,
     pub description: Option<String>,
     pub file_path: String,
@@ -17,8 +17,9 @@ pub struct AISkill {
 
 impl AISkill {
     pub fn new(name: String, description: Option<String>, file_path: String) -> Self {
+        let record_id = Uuid::new_v4().to_string();
         Self {
-            id: Uuid::new_v4().to_string(),
+            id: Thing::from((String::from("ai_skills"), record_id)),
             name,
             description,
             file_path,

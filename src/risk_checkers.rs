@@ -236,10 +236,6 @@ impl PromptInjectionChecker {
 }
 
 // Re-export the risk checkers from the risks module
-pub use crate::risks::SupplyChainChecker;
-pub use crate::risks::NetworkChecker;
-pub use crate::risks::ContextPoisoningChecker;
-pub use crate::risks::PromptInjectionChecker;
 pub use crate::risks::AIAnalyzer;
 
 // Common utilities used by risk checkers

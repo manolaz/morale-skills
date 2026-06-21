@@ -1,23 +1,30 @@
-use surrealdb::engine::local::Mem;
+use surrealdb::engine::local::{Db, Mem};
+use surrealdb::dbs::capabilities::Capabilities;
 use surrealdb::opt::auth::Root;
+use surrealdb::opt::Config;
 use surrealdb::Surreal;
 use anyhow::Result;
 
 /// Database connection wrapper
 pub struct Database {
-    pub db: Surreal<Mem>,
+    pub db: Surreal<Db>,
 }
 
 impl Database {
     /// Creates a new database instance
     pub async fn new() -> Result<Self> {
-        let db = Surreal::new::<Mem>(()).await?;
-        
-        // Sign in as root user
-        db.signin(Root {
+        let root = Root {
             username: "root",
             password: "root",
-        }).await?;
+        };
+        let config = Config::new()
+            .user(root.clone())
+            .capabilities(Capabilities::all());
+
+        let db = Surreal::new::<Mem>(config).await?;
+        
+        // Sign in as root user
+        db.signin(root).await?;
         
         // Select the namespace and database
         db.use_ns("morale").use_db("skills").await?;

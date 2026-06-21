@@ -109,14 +109,12 @@ impl MoraleAuditor {
             }
         }
         
-        let skill = AISkill {
-            id: None,
-            name: skill_name,
-            description: Some(format!("AI skill from path: {}", path)),
-            file_path: path.to_string(),
-            created_at: chrono::Utc::now(),
-            risks,
-        };
+        let mut skill = AISkill::new(
+            skill_name,
+            Some(format!("AI skill from path: {}", path)),
+            path.to_string(),
+        );
+        skill.risks = risks;
         
         // Save the audit result to the database
         let created_skill = self.db.save_skill(skill).await?;
@@ -190,7 +188,12 @@ fn print_report(skill: &AISkill, json: bool) {
         println!("============");
         println!("Skill: {}", skill.name);
         println!("Path: {}", skill.file_path);
-        println!("Created: {}", skill.created_at);
+        let created_at = skill
+            .created_at
+            .as_ref()
+            .map(|value| value.to_rfc3339())
+            .unwrap_or_else(|| "unknown".to_string());
+        println!("Created: {}", created_at);
         println!("Risks found: {}", skill.risks.len());
         println!();
         
@@ -264,7 +267,7 @@ async fn main() -> Result<()> {
             println!("  {}: {}", risk_type, count);
         }
         
-        println("\nSeverity Levels:");
+        println!("\nSeverity Levels:");
         for (severity, count) in &severity_summary {
             println!("  {}: {}", severity, count);
         }
