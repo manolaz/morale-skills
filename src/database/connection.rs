@@ -13,12 +13,6 @@ impl Database {
     pub async fn new() -> Result<Self> {
         let db = Surreal::new::<Mem>(()).await?;
         
-        // Sign in as root user
-        db.signin(Root {
-            username: "root",
-            password: "root",
-        }).await?;
-        
         // Select the namespace and database
         db.use_ns("morale").use_db("skills").await?;
         
