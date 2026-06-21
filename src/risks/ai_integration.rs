@@ -266,7 +266,7 @@ impl RiskChecker for AIAnalyzer {
             _ => Err(anyhow::anyhow!("Unsupported AI service: {}", service)),
         }
     }
-}
+
 
 /// Helper function to parse AI API responses into RiskFinding structs
 async fn parse_ai_response(response: String, default_risk_type: RiskType) -> Result<Vec<RiskFinding>> {
