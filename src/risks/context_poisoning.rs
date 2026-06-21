@@ -1,13 +1,20 @@
 use crate::models::{RiskFinding, RiskType, Severity};
+use crate::risks::base::RiskChecker;
+use crate::risks::utils::is_text_file;
 use anyhow::Result;
 use std::path::Path;
 use std::fs;
-use crate::risks::utils::is_text_file;
+use async_trait::async_trait;
 
 pub struct ContextPoisoningChecker;
 
-impl ContextPoisoningChecker {
-    pub async fn check(path: &str) -> Result<Vec<RiskFinding>> {
+#[async_trait]
+impl RiskChecker for ContextPoisoningChecker {
+    fn name(&self) -> &'static str {
+        "Context Poisoning Checker"
+    }
+
+    async fn check(&self, path: &str) -> Result<Vec<RiskFinding>> {
         let mut findings = Vec::new();
         
         // Walk through all files in the path to look for context poisoning risks
@@ -27,6 +34,9 @@ impl ContextPoisoningChecker {
                         ("cache", Severity::Low),
                         ("session", Severity::Low),
                         ("state", Severity::Medium),
+                        ("context", Severity::Medium),
+                        ("transcript", Severity::Low),
+                        ("log", Severity::Low),
                     ];
                     
                     for (pattern, severity) in &context_patterns {
@@ -55,10 +65,28 @@ impl ContextPoisoningChecker {
                             timestamp: chrono::Utc::now(),
                         });
                     }
+                    
+                    // Look for context overflow vulnerabilities
+                    if content.contains("append") && 
+                       (content.contains("history") || content.contains("context") || content.contains("conversation")) {
+                        findings.push(RiskFinding {
+                            id: uuid::Uuid::new_v4().to_string(),
+                            risk_type: RiskType::ContextPoisoning,
+                            severity: Severity::Medium,
+                            description: "Potential context overflow vulnerability".to_string(),
+                            evidence: format!("Appending to context/history without limits in {}", file_path.display()),
+                            location: Some(file_path.display().to_string()),
+                            timestamp: chrono::Utc::now(),
+                        });
+                    }
                 }
             }
         }
         
         Ok(findings)
+    }
+
+    fn risk_category(&self) -> &'static str {
+        "Context Poisoning"
     }
 }

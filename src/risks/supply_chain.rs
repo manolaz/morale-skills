@@ -1,12 +1,19 @@
 use crate::models::{RiskFinding, RiskType, Severity};
+use crate::risks::base::RiskChecker;
 use anyhow::Result;
 use std::path::Path;
 use std::fs;
+use async_trait::async_trait;
 
 pub struct SupplyChainChecker;
 
-impl SupplyChainChecker {
-    pub async fn check(path: &str) -> Result<Vec<RiskFinding>> {
+#[async_trait]
+impl RiskChecker for SupplyChainChecker {
+    fn name(&self) -> &'static str {
+        "Supply Chain Checker"
+    }
+
+    async fn check(&self, path: &str) -> Result<Vec<RiskFinding>> {
         let mut findings = Vec::new();
         
         // Analyze the skill path for supply chain risks
@@ -61,5 +68,9 @@ impl SupplyChainChecker {
         }
         
         Ok(findings)
+    }
+
+    fn risk_category(&self) -> &'static str {
+        "Supply Chain"
     }
 }

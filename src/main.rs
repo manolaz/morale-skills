@@ -4,7 +4,7 @@ use tracing::{info, error, Level};
 use std::path::Path;
 use std::collections::HashMap;
 
-use morale::{database::Database, models::{AISkill, RiskFinding, RiskType, Severity}};
+use morale::{database::Database, models::{AISkill, RiskFinding, RiskType, Severity}, risk_checkers::RiskCheckerRegistry};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -70,20 +70,9 @@ impl MoraleAuditor {
             .unwrap_or("unknown")
             .to_string();
         
-        // Perform various risk assessments
-        let mut risks = Vec::new();
-        
-        // Check for supply chain risks
-        risks.extend(morale::risk_checkers::SupplyChainChecker::check(path).await?);
-        
-        // Check for network risks
-        risks.extend(morale::risk_checkers::NetworkChecker::check(path).await?);
-        
-        // Check for context poisoning risks
-        risks.extend(morale::risk_checkers::ContextPoisoningChecker::check(path).await?);
-        
-        // Check for prompt injection risks
-        risks.extend(morale::risk_checkers::PromptInjectionChecker::check(path).await?);
+        // Create a registry of risk checkers and run all checks
+        let registry = RiskCheckerRegistry::new();
+        let mut risks = registry.run_all_checks(path).await?;
         
         // Perform AI-based analysis if enabled
         if use_ai {
@@ -141,7 +130,7 @@ impl MoraleAuditor {
                             let entry_path = entry.path();
                             if entry_path.is_dir() {
                                 stack.push(entry_path);
-                            } else if morale::risk_checkers::is_text_file(&entry_path) {
+                            } else if morale::risks::utils::is_text_file(&entry_path) {
                                 if let Ok(content) = fs::read_to_string(&entry_path) {
                                     if content.len() > 0 && content.len() < 10000 { // Limit content size
                                         contents.push(content);
