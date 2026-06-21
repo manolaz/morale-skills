@@ -365,14 +365,6 @@ impl Database {
         Ok(analysis)
     }
 
-    /// Gets the top N skills with the most risks
-    pub async fn get_top_risky_skills(&self, n: usize) -> Result<Vec<AISkill>> {
-        let skills: Vec<AISkill> = self.db.query(
-            format!("SELECT * FROM ai_skills ORDER BY array::len(risks) DESC LIMIT {}", n)
-        ).await?.check()?.take(0)?;
-        Ok(skills)
-    }
-
     /// Gets risk trends over time
     pub async fn get_risk_trends(&self) -> Result<Vec<(String, i64)>> {
         let trends: Vec<(String, i64)> = self.db.query(
