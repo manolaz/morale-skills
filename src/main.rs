@@ -49,15 +49,23 @@ struct Args {
     /// Custom endpoint for AI service (required for Qwen)
     #[arg(long)]
     ai_endpoint: Option<String>,
+
+    /// Run in lightweight mode (skip database operations)
+    #[arg(short, long)]
+    lightweight: bool,
 }
 
 struct MoraleAuditor {
-    db: Database,
+    db: Option<Database>,
 }
 
 impl MoraleAuditor {
-    async fn new() -> Result<Self> {
-        let db = Database::new().await?;
+    async fn new(lightweight: bool) -> Result<Self> {
+        let db = if lightweight {
+            None
+        } else {
+            Some(Database::new().await?)
+        };
         
         Ok(MoraleAuditor { db })
     }
@@ -158,9 +166,14 @@ impl MoraleAuditor {
         // Update the risks on the skill
         skill.risks = risks;
         
-        // Save the audit result to the database
-        info!("Saving audit results to database...");
-        let created_skill = self.db.save_skill(skill).await?;
+        // Save the audit result to the database if available
+        let created_skill = if let Some(ref db) = self.db {
+            info!("Saving audit results to database...");
+            db.save_skill(skill).await?
+        } else {
+            info!("Lightweight mode: skipping database save.");
+            skill
+        };
         
         info!("Audit completed for skill: {}", created_skill.name);
         Ok(created_skill)
@@ -206,27 +219,51 @@ impl MoraleAuditor {
     }
     
     async fn get_audit_report(&self, skill_id: &str) -> Result<Option<AISkill>> {
-        self.db.get_skill(skill_id).await
+        if let Some(ref db) = self.db {
+            db.get_skill(skill_id).await
+        } else {
+            Err(anyhow::anyhow!("Database is not available in lightweight mode"))
+        }
     }
     
     async fn get_all_audits(&self) -> Result<Vec<AISkill>> {
-        self.db.get_all_skills().await
+        if let Some(ref db) = self.db {
+            db.get_all_skills().await
+        } else {
+            Err(anyhow::anyhow!("Database is not available in lightweight mode"))
+        }
     }
     
     async fn get_skills_by_risk_type(&self, risk_type: &RiskType) -> Result<Vec<AISkill>> {
-        self.db.get_skills_by_risk_type(risk_type).await
+        if let Some(ref db) = self.db {
+            db.get_skills_by_risk_type(risk_type).await
+        } else {
+            Err(anyhow::anyhow!("Database is not available in lightweight mode"))
+        }
     }
     
     async fn get_skills_by_severity(&self, severity: &Severity) -> Result<Vec<AISkill>> {
-        self.db.get_skills_by_severity(severity).await
+        if let Some(ref db) = self.db {
+            db.get_skills_by_severity(severity).await
+        } else {
+            Err(anyhow::anyhow!("Database is not available in lightweight mode"))
+        }
     }
     
     async fn get_risk_summary(&self) -> Result<HashMap<String, usize>> {
-        self.db.get_risk_summary().await
+        if let Some(ref db) = self.db {
+            db.get_risk_summary().await
+        } else {
+            Err(anyhow::anyhow!("Database is not available in lightweight mode"))
+        }
     }
     
     async fn get_severity_summary(&self) -> Result<HashMap<String, usize>> {
-        self.db.get_severity_summary().await
+        if let Some(ref db) = self.db {
+            db.get_severity_summary().await
+        } else {
+            Err(anyhow::anyhow!("Database is not available in lightweight mode"))
+        }
     }
 }
 
@@ -333,7 +370,7 @@ async fn main() -> Result<()> {
     }
     
     debug!("Initializing MoraleAuditor...");
-    let auditor = MoraleAuditor::new().await?;
+    let auditor = MoraleAuditor::new(args.lightweight).await?;
     debug!("MoraleAuditor initialized successfully");
     
     // Handle different command modes
@@ -413,8 +450,16 @@ mod tests {
     
     #[tokio::test]
     async fn test_morale_auditor_creation() {
-        let result = MoraleAuditor::new().await;
+        let result = MoraleAuditor::new(false).await;
         assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_morale_auditor_creation_lightweight() {
+        let result = MoraleAuditor::new(true).await;
+        assert!(result.is_ok());
+        let auditor = result.unwrap();
+        assert!(auditor.db.is_none());
     }
     
     #[tokio::test]
