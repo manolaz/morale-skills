@@ -3,7 +3,6 @@ use clap::Parser;
 use tracing::{info, error, warn, debug, Level};
 use std::path::Path;
 use std::collections::HashMap;
-use tokio::task;
 use indicatif::{ProgressBar, ProgressStyle};
 
 use morale::{database::Database, models::{AISkill, RiskFinding, RiskType, Severity}, risk_checkers::RiskCheckerRegistry};
@@ -138,8 +137,9 @@ impl MoraleAuditor {
                     }
                     ai_pb.finish_with_message("AI analysis completed");
                     
+                    let ai_count = ai_findings.len();
                     risks.extend(ai_findings);
-                    info!("Added {} AI-detected risks", ai_findings.len());
+                    info!("Added {} AI-detected risks", ai_count);
                 } else {
                     info!("No text files found for AI analysis");
                 }

@@ -1,11 +1,11 @@
-use surrealdb::engine::local::Mem;
+use surrealdb::engine::local::{Mem, Db};
 use surrealdb::opt::auth::Root;
 use surrealdb::Surreal;
 use anyhow::Result;
 
 /// Database connection wrapper
 pub struct Database {
-    pub db: Surreal<Mem>,
+    pub db: Surreal<Db>,
 }
 
 impl Database {

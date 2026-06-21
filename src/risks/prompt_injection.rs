@@ -2,7 +2,6 @@ use crate::models::{RiskFinding, RiskType, Severity};
 use crate::risks::base::RiskChecker;
 use crate::risks::utils::is_text_file;
 use anyhow::Result;
-use std::path::Path;
 use std::fs;
 use async_trait::async_trait;
 

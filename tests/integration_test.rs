@@ -7,12 +7,13 @@ async fn test_database_operations() -> Result<()> {
     let db = Database::new().await?;
     
     let skill = AISkill {
-        id: None,
+        id: uuid::Uuid::new_v4().to_string(),
         name: "test_skill".to_string(),
         description: Some("A test skill for integration testing".to_string()),
         file_path: "/tmp/test_skill".to_string(),
-        created_at: chrono::Utc::now(),
+        created_at: Some(chrono::Utc::now()),
         risks: vec![],
+        status: "pending".to_string(),
     };
     
     let saved_skill = db.save_skill(skill).await?;
@@ -29,6 +30,7 @@ async fn test_risk_finding_creation() -> Result<()> {
         severity: Severity::High,
         description: "Test risk finding".to_string(),
         evidence: "Evidence for test risk".to_string(),
+        location: None,
         timestamp: chrono::Utc::now(),
     };
     

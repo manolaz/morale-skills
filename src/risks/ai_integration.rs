@@ -2,9 +2,10 @@ use crate::models::{RiskFinding, RiskType, Severity};
 use crate::risks::base::RiskChecker;
 use crate::risks::utils::is_text_file;
 use anyhow::Result;
-use std::path::Path;
 use std::fs;
+use std::collections::HashMap;
 use async_trait::async_trait;
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct APIRequest {
@@ -110,6 +111,10 @@ impl RiskChecker for AIAnalyzer {
         "AI Integration"
     }
 }
+
+pub struct AIAnalyzer;
+
+impl AIAnalyzer {
     /// Analyze code using Anthropic's Claude API
     pub async fn analyze_with_claude(code_snippet: &str, api_key: &str) -> Result<Vec<RiskFinding>> {
         let client = reqwest::Client::new();
@@ -266,6 +271,7 @@ impl RiskChecker for AIAnalyzer {
             _ => Err(anyhow::anyhow!("Unsupported AI service: {}", service)),
         }
     }
+}
 
 
 /// Helper function to parse AI API responses into RiskFinding structs
