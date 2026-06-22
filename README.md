@@ -44,6 +44,11 @@ morale /path/to/ai-skill.zip
 
 # Verbose output
 morale -v /path/to/ai-skill
+
+# Lightweight run (Skip database saving/operations and print findings directly to the terminal)
+morale --lightweight /path/to/ai-skill
+# or using the short flag:
+morale -l /path/to/ai-skill
 ```
 
 ### Configuration

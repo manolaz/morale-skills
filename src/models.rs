@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use surrealdb::sql::Thing;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 

@@ -1,9 +1,11 @@
 use crate::models::{RiskFinding, RiskType, Severity};
+use crate::risks::base::RiskChecker;
+use crate::risks::utils::is_text_file;
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
+use std::fs;
 use std::collections::HashMap;
-use reqwest;
-use serde_json;
+use async_trait::async_trait;
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct APIRequest {
@@ -20,6 +22,94 @@ struct APIResponse {
 #[derive(Debug, Serialize, Deserialize)]
 struct Choice {
     text: String,
+}
+
+#[async_trait]
+impl RiskChecker for AIAnalyzer {
+    fn name(&self) -> &'static str {
+        "AI Integration Analyzer"
+    }
+
+    async fn check(&self, path: &str) -> Result<Vec<RiskFinding>> {
+        let mut findings = Vec::new();
+        
+        // Walk through all files in the path to look for AI integration risks
+        let dir_entries = fs::read_dir(path)?;
+        
+        for entry in dir_entries {
+            let entry = entry?;
+            let file_path = entry.path();
+            
+            if file_path.is_file() && is_text_file(&file_path) {
+                if let Ok(content) = fs::read_to_string(&file_path) {
+                    // Look for AI integration-related patterns
+                    let ai_patterns = vec![
+                        ("openai", Severity::Medium),
+                        ("gpt", Severity::Medium),
+                        ("llm", Severity::Low),
+                        ("model", Severity::Low),
+                        ("chat", Severity::Low),
+                        ("completion", Severity::Low),
+                        ("embeddings", Severity::Low),
+                        ("transformers", Severity::Low),
+                        ("huggingface", Severity::Low),
+                        ("tensorflow", Severity::Low),
+                        ("pytorch", Severity::Low),
+                        ("langchain", Severity::Medium),
+                        ("llama", Severity::Low),
+                        ("mistral", Severity::Low),
+                        ("claude", Severity::Low),
+                    ];
+                    
+                    for (pattern, severity) in &ai_patterns {
+                        if content.contains(pattern) {
+                            findings.push(RiskFinding {
+                                id: uuid::Uuid::new_v4().to_string(),
+                                risk_type: RiskType::AIBased,
+                                severity: severity.clone(),
+                                description: format!("AI integration pattern found: {}", pattern),
+                                evidence: format!("Pattern '{}' found in file {}", pattern, file_path.display()),
+                                location: Some(file_path.display().to_string()),
+                                timestamp: chrono::Utc::now(),
+                            });
+                        }
+                    }
+                    
+                    // Look for hard-coded API keys in AI integrations
+                    if content.contains("openai") && content.contains("sk-") {
+                        findings.push(RiskFinding {
+                            id: uuid::Uuid::new_v4().to_string(),
+                            risk_type: RiskType::AIBased,
+                            severity: Severity::Critical,
+                            description: "Hard-coded OpenAI API key found".to_string(),
+                            evidence: format!("Hard-coded OpenAI API key found in {}", file_path.display()),
+                            location: Some(file_path.display().to_string()),
+                            timestamp: chrono::Utc::now(),
+                        });
+                    }
+                    
+                    // Look for AI model loading without validation
+                    if content.contains("load_model") && !content.contains("verify") && !content.contains("validate") {
+                        findings.push(RiskFinding {
+                            id: uuid::Uuid::new_v4().to_string(),
+                            risk_type: RiskType::AIBased,
+                            severity: Severity::High,
+                            description: "AI model loaded without validation".to_string(),
+                            evidence: format!("Model loaded without verification in {}", file_path.display()),
+                            location: Some(file_path.display().to_string()),
+                            timestamp: chrono::Utc::now(),
+                        });
+                    }
+                }
+            }
+        }
+        
+        Ok(findings)
+    }
+
+    fn risk_category(&self) -> &'static str {
+        "AI Integration"
+    }
 }
 
 pub struct AIAnalyzer;
@@ -182,6 +272,7 @@ impl AIAnalyzer {
         }
     }
 }
+
 
 /// Helper function to parse AI API responses into RiskFinding structs
 async fn parse_ai_response(response: String, default_risk_type: RiskType) -> Result<Vec<RiskFinding>> {

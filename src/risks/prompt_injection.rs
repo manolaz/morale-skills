@@ -1,12 +1,19 @@
 use crate::models::{RiskFinding, RiskType, Severity};
+use crate::risks::base::RiskChecker;
+use crate::risks::utils::is_text_file;
 use anyhow::Result;
 use std::fs;
-use crate::risks::utils::is_text_file;
+use async_trait::async_trait;
 
 pub struct PromptInjectionChecker;
 
-impl PromptInjectionChecker {
-    pub async fn check(path: &str) -> Result<Vec<RiskFinding>> {
+#[async_trait]
+impl RiskChecker for PromptInjectionChecker {
+    fn name(&self) -> &'static str {
+        "Prompt Injection Checker"
+    }
+
+    async fn check(&self, path: &str) -> Result<Vec<RiskFinding>> {
         let mut findings = Vec::new();
         
         // Walk through all files in the path to look for prompt injection risks
@@ -27,6 +34,9 @@ impl PromptInjectionChecker {
                         ("concat", Severity::Medium),
                         ("replace", Severity::Low),
                         ("input", Severity::High), // Direct user input handling
+                        ("prompt", Severity::Medium),
+                        ("message", Severity::Medium),
+                        ("query", Severity::Medium),
                     ];
                     
                     for (pattern, severity) in &injection_patterns {
@@ -46,7 +56,7 @@ impl PromptInjectionChecker {
                     
                     // Look for missing input sanitization
                     if (content.contains("user") || content.contains("input")) && 
-                       !(content.contains("sanitize") || content.contains("escape") || content.contains("filter")) {
+                       !(content.contains("sanitize") || content.contains("escape") || content.contains("filter") || content.contains("validate")) {
                         findings.push(RiskFinding {
                             id: uuid::Uuid::new_v4().to_string(),
                             risk_type: RiskType::PromptInjection,
@@ -57,10 +67,29 @@ impl PromptInjectionChecker {
                             timestamp: chrono::Utc::now(),
                         });
                     }
+                    
+                    // Look for direct concatenation of user input in prompts
+                    if content.contains("+") && 
+                       (content.contains("prompt") || content.contains("message")) && 
+                       (content.contains("user") || content.contains("input")) {
+                        findings.push(RiskFinding {
+                            id: uuid::Uuid::new_v4().to_string(),
+                            risk_type: RiskType::PromptInjection,
+                            severity: Severity::High,
+                            description: "Direct concatenation of user input in prompts".to_string(),
+                            evidence: format!("Direct concatenation found in {}", file_path.display()),
+                            location: Some(file_path.display().to_string()),
+                            timestamp: chrono::Utc::now(),
+                        });
+                    }
                 }
             }
         }
         
         Ok(findings)
+    }
+
+    fn risk_category(&self) -> &'static str {
+        "Prompt Injection"
     }
 }

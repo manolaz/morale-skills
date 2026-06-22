@@ -8,3 +8,4 @@ pub use models::*;
 pub use database::*;
 pub use risk_checkers::*;
 pub use config::*;
+pub use risks::*;

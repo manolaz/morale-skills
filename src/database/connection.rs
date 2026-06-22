@@ -1,5 +1,4 @@
-use surrealdb::engine::local::{Db, Mem};
-use surrealdb::dbs::capabilities::Capabilities;
+use surrealdb::engine::local::{Mem, Db};
 use surrealdb::opt::auth::Root;
 use surrealdb::opt::Config;
 use surrealdb::Surreal;

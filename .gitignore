@@ -1,1 +1,10 @@
 target/
+*.DS_Store
+.idea/
+*.iml
+*.log
+*.tmp
+*.bak
+*.swp
+.DS_Store
+data/skills/.DS_Store

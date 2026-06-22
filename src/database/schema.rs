@@ -12,7 +12,7 @@ pub async fn define_tables(db: &Database) -> Result<()> {
         DEFINE FIELD description ON TABLE ai_skills TYPE option<string>;
         DEFINE FIELD file_path ON TABLE ai_skills TYPE string ASSERT string::len($value) > 0;
         DEFINE FIELD created_at ON TABLE ai_skills TYPE datetime VALUE $before OR time::now();
-        DEFINE FIELD risks ON TABLE ai_skills TYPE array<record<risk_findings>>;
+        DEFINE FIELD risks ON TABLE ai_skills TYPE array;
         DEFINE FIELD status ON TABLE ai_skills TYPE string DEFAULT "pending";
         
         DEFINE TABLE risk_findings SCHEMAFULL;
