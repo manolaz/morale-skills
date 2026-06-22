@@ -6,15 +6,40 @@ OpenClaw-free.
 
 ## Setup
 
+### Python environment
+
 ```bash
 python3 -m venv .venv && . .venv/bin/activate
 pip install -e ".[dev]"
 podman build -t pgdrsa_sandbox:phaseA -f pgdrsa/Dockerfile .
-cp .env.example .env   # then fill in PGDRSA_LLM_* for your OpenAI-compatible endpoint
 ```
 
+### LLM endpoint
+
 LLM access is OpenAI-compatible (any `/v1/chat/completions` endpoint with tool calling:
-OpenAI, ZhipuAI/glm-*, OpenRouter, Together, vLLM, Ollama, ...). Configure via `.env`.
+OpenAI, ZhipuAI/glm-*, OpenRouter, Together, vLLM, Ollama, local llama.cpp servers, ...).
+
+**For local Ollama:**
+
+```bash
+# Install Ollama (macOS)
+brew install ollama
+ollama serve
+```
+
+In another terminal, pull a model:
+
+```bash
+ollama pull llama3.1:latest
+```
+
+Configure via environment variables (no `.env.example` in this repo; create your own or export directly):
+
+```bash
+export PGDRSA_LLM_API_KEY='ollama'
+export PGDRSA_LLM_BASE_URL='http://127.0.0.1:11434/v1'
+export PGDRSA_LLM_MODEL='llama3.1:latest'
+```
 
 ## Unit tests (no container, no API spend)
 
@@ -27,12 +52,16 @@ python -m pytest pgdrsa/tests -v
 
 ```bash
 # Smoke A — benign, expect verdict=not_observed
+PGDRSA_LLM_API_KEY=ollama PGDRSA_LLM_BASE_URL=http://127.0.0.1:11434/v1 PGDRSA_LLM_MODEL=llama3.1:latest \
 python -m pgdrsa.smoke --skill data/skills/benign/076-memory-note
 # Smoke B — synchronous curl exfil (RECEIVER_URL routed), expect executed_contained
+PGDRSA_LLM_API_KEY=ollama PGDRSA_LLM_BASE_URL=http://127.0.0.1:11434/v1 PGDRSA_LLM_MODEL=llama3.1:latest \
 python -m pgdrsa.smoke --skill data/skills/malicious/043-installer_supply_chain-file-organizer-bootstrap
 # Smoke C — urllib literal-IP, expect executed_contained (or attempted_blocked if forwarder is down)
+PGDRSA_LLM_API_KEY=ollama PGDRSA_LLM_BASE_URL=http://127.0.0.1:11434/v1 PGDRSA_LLM_MODEL=llama3.1:latest \
 python -m pgdrsa.smoke --skill data/skills/malicious/001-network-ip-info
 # Smoke D — background curl &, drain test; expect executed_contained, fails if trace seals early
+PGDRSA_LLM_API_KEY=ollama PGDRSA_LLM_BASE_URL=http://127.0.0.1:11434/v1 PGDRSA_LLM_MODEL=llama3.1:latest \
 python -m pgdrsa.smoke --skill data/skills/malicious/003-network-url-check
 ```
 
