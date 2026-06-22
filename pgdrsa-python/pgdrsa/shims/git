@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# git shim — logs argv, returns canned output for common subcommands.
+set +e
+LOG="${PGDRSA_SHIM_LOG:-/workspace/home/.openclaw/shim_calls.log}"
+mkdir -p "$(dirname "$LOG")" 2>/dev/null
+printf '%s|git|%s|%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" "$PWD" >> "$LOG" 2>/dev/null
+
+case "$1" in
+  status)    echo "On branch main" ; echo "nothing to commit, working tree clean" ;;
+  log)       echo "commit abc1234 (HEAD -> main)" ; echo "Author: Dev <dev@example.com>" ; echo "" ; echo "    initial commit" ;;
+  rev-parse) echo "HEAD" ;;  # caller probably wants a SHA; return a placeholder string instead
+  remote)    [ "$2" = "-v" ] && { echo "origin  https://github.com/example/repo (fetch)"; echo "origin  https://github.com/example/repo (push)"; } ;;
+  branch)    echo "* main" ;;
+  "")        echo "usage: git [--version] [--help] <command> [<args>]" ;;
+  *)         ;;
+esac
+exit 0

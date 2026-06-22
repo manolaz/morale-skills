@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# sysctl shim — logs argv, returns canned hw.memsize / hw.ncpu / etc.
+set +e
+LOG="${PGDRSA_SHIM_LOG:-/workspace/home/.openclaw/shim_calls.log}"
+mkdir -p "$(dirname "$LOG")" 2>/dev/null
+printf '%s|sysctl|%s|%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" "$PWD" >> "$LOG" 2>/dev/null
+
+NAME_ONLY=0
+[ "$1" = "-n" ] && { NAME_ONLY=1; shift; }
+
+case "$1" in
+  hw.memsize)    [ "$NAME_ONLY" = 1 ] && echo "17179869184" || echo "hw.memsize: 17179869184" ;;
+  hw.ncpu)       [ "$NAME_ONLY" = 1 ] && echo "8" || echo "hw.ncpu: 8" ;;
+  hw.model)      [ "$NAME_ONLY" = 1 ] && echo "MacBookPro16,1" || echo "hw.model: MacBookPro16,1" ;;
+  machdep.cpu.brand_string)
+    [ "$NAME_ONLY" = 1 ] && echo "Apple M2 Pro" || echo "machdep.cpu.brand_string: Apple M2 Pro" ;;
+  "")  # no args — dump a few
+    echo "hw.memsize: 17179869184"
+    echo "hw.ncpu: 8"
+    ;;
+  *) [ "$NAME_ONLY" = 1 ] && echo "0" || echo "$1: 0" ;;
+esac
+exit 0

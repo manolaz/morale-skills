@@ -1,0 +1,56 @@
+morale-hybrid-auditor/
+│
+├── README.md                          # Tài liệu tổng quan toàn bộ dự án kiến trúc lai
+├── hybrid_orchestrator.py             # 🎯 KỊCH BẢN ĐIỀU PHỐI TRUNG TÂM (Đã viết ở trên)
+├── .env                               # File chứa biến môi trường (GEMINI_API_KEY, PGDRSA_LLM_*)
+├── requirements.txt                   # Danh sách thư viện Python chung (pydantic, google-generativeai...)
+│
+├── morale-rust/                       # 🟧 KHỐI 1: MORALE (QUÉT MÃ TĨNH SIÊU TỐC - RUST)
+│   ├── Cargo.toml                     # Quản lý dependencies của Rust
+│   ├── Cargo.lock
+│   ├── build.rs
+│   ├── config.toml                    # Cấu hình database, thresholds cho phần tĩnh
+│   ├── run_morale.sh                  # Script build & run nhanh (Linux/Mac)
+│   ├── run_morale.bat                 # Script build & run nhanh (Windows)
+│   └── src/                           # Source code Rust nguyên bản
+│       ├── main.rs                    # Entry point của CLI
+│       ├── lib.rs
+│       ├── config.rs
+│       ├── models.rs
+│       ├── risk_checkers.rs
+│       ├── database/                  # Quản lý SurrealDB
+│       │   ├── mod.rs, connection.rs, schema.rs, utils.rs
+│       │   └── queries/               # skills.rs, findings.rs, audit.rs...
+│       └── risks/                     # Các bộ kiểm tra tĩnh
+│           ├── mod.rs, base.rs, utils.rs
+│           ├── prompt_injection.rs, supply_chain.rs, network.rs...
+│           └── ai_integration.rs
+│
+├── pgdrsa-python/                     # 🟦 KHỐI 2: SANDBOX ĐỘNG & ĐÁNH GIÁ (PYTHON)
+│   ├── Dockerfile                     # Cấu hình build Docker image cho Sandbox
+│   ├── pyproject.toml                 # Cấu hình project cho thư viện pgdrsa
+│   ├── agent_benchmark_runner.py      # Kịch bản chạy benchmark đo lường (chạy độc lập nếu cần)
+│   ├── run_all.py                     # Kịch bản chạy hàng loạt
+│   ├── smoke.py                       # Kịch bản test khói
+│   ├── pgdrsa/                        # Source code lõi của hệ thống Sandbox
+│   │   ├── __init__.py
+│   │   ├── agent.py, pipeline.py, runner.py, container_runner.py
+│   │   ├── barrier.py, trace.py, receiver.py, forwarder.py
+│   │   ├── fixtures.py, canary.py, tools.py
+│   │   └── judge.py, analyze.py, config.py
+│   └── tests/                         # Thư mục chứa toàn bộ Unit Tests của Python
+│       ├── test_agent_fakellm.py, test_barrier.py, test_canary.py...
+│
+├── data/                              # 🗂️ TẬP DỮ LIỆU & SKILLS (CORPUS)
+│   └── skills/
+│       ├── benign/                    # Chứa các kỹ năng an toàn (001, 002...)
+│       │   ├── 052-general-7-eleven/
+│       │   └── ...
+│       └── malicious/                 # Chứa các kỹ năng độc hại
+│           ├── 001-network-ip-info/
+│           └── ...
+│
+└── reports/                           # 📊 KẾT QUẢ ĐẦU RA
+    ├── static_logs/                   # Chứa JSON xuất ra từ Morale Rust
+    ├── trace_logs/                    # Chứa dấu vết chạy xuất ra từ PGDRSA Python
+    └── hybrid_verdicts/               # Chứa các file `hybrid_report_*.json` tổng hợp cuối cùng

@@ -1,0 +1,40 @@
+# MORALE - AI Skills Auditor Configuration
+
+# Database configuration
+[database]
+# Storage engine (options: mem, tikv, rocksdb)
+storage_engine = "mem"
+# Namespace for the database
+namespace = "morale"
+# Database name
+database = "skills"
+
+# Audit configuration
+[audit]
+# Enable verbose logging
+verbose = false
+# Risk threshold levels
+risk_thresholds = { low = 0, medium = 1, high = 2, critical = 3 }
+# Enabled risk checks
+enabled_checks = [
+    "supply_chain",
+    "network", 
+    "context_poisoning",
+    "prompt_injection"
+]
+
+# Report configuration
+[report]
+# Output format (options: json, txt, html)
+output_format = "json"
+# Output directory for reports
+output_directory = "./reports"
+# Include detailed evidence in reports
+include_evidence = true
+
+# Security configuration
+[security]
+# Maximum file size to scan (in MB)
+max_file_size_mb = 100
+# Allowed file extensions
+allowed_extensions = [".py", ".js", ".ts", ".json", ".yaml", ".yml", ".txt", ".md"]
