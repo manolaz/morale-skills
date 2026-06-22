@@ -1,6 +1,5 @@
 use crate::models::{RiskFinding, RiskType, Severity};
 use anyhow::Result;
-use std::path::Path;
 use std::fs;
 use crate::risks::utils::is_text_file;
 
