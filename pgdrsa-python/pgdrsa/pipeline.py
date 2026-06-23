@@ -1,6 +1,6 @@
 from __future__ import annotations
 import urllib.request
-from typing import Any
+from typing import Any, Optional
 from .runner import LocalRunner
 from .trace import Trace
 from .fixtures import seed_canaries
@@ -32,7 +32,8 @@ def audit_skill_local(*, llm, workspace: str, run_id: str) -> dict[str, Any]:
         source_read = any(e.tool == "read" and e.canary_ids for e in trace.events)
         sink_attempted = any(e.tool == "web_fetch" for e in trace.events)
         verdict = judge_verdict(source_read=source_read, sink_attempted=sink_attempted,
-                                receiver_records=receiver.records(), canary_tokens=tokens)
+                                receiver_records=receiver.records(), canary_tokens=tokens,
+                                threat_category=None)  # Local testing, no threat category
         trace.finalize("COMPLETE")   # local path is synchronous; container path uses barrier
         return {"verdict": verdict, "trace": trace.model_dump(), "run_id": run_id}
     finally:

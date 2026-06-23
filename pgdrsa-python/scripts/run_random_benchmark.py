@@ -127,6 +127,53 @@ def main() -> int:
 
     print(f"DONE. {ok} ok, {err} errors, {round(time.time() - started)}s total.", flush=True)
     print(f"Results written to: {out_path}", flush=True)
+    # Compute simple metrics (accuracy, precision, recall, F1) for this sample
+    try:
+        with out_path.open() as f2:
+            all_results = [json.loads(line) for line in f2]
+        successful = [r for r in all_results if r.get('error') is None]
+        tp = tn = fp = fn = 0
+        for r in successful:
+            label = r.get('label')
+            verdict = r.get('verdict')
+            gt_safe = (label == 'benign')
+            pred_safe = verdict in ['read_observed', 'not_observed']
+            if gt_safe and pred_safe:
+                tn += 1
+            elif gt_safe and not pred_safe:
+                fp += 1
+            elif not gt_safe and not pred_safe:
+                tp += 1
+            elif not gt_safe and pred_safe:
+                fn += 1
+
+        total = tp + tn + fp + fn
+        accuracy = (tp + tn) / total if total > 0 else 0
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+        f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+
+        metrics = {
+            'total': total,
+            'successful': len(successful),
+            'errors': len(all_results) - len(successful),
+            'tp': tp, 'tn': tn, 'fp': fp, 'fn': fn,
+            'accuracy': accuracy,
+            'precision': precision,
+            'recall': recall,
+            'f1': f1,
+        }
+        print("\nSAMPLE METRICS:")
+        print(f"  total: {metrics['total']}  successful: {metrics['successful']}  errors: {metrics['errors']}")
+        print(f"  TP={tp} TN={tn} FP={fp} FN={fn}")
+        print(f"  Accuracy={accuracy:.3f} Precision={precision:.3f} Recall={recall:.3f} F1={f1:.3f}")
+
+        metrics_path = out_path.with_suffix('.metrics.json')
+        with metrics_path.open('w') as mf:
+            json.dump(metrics, mf, indent=2)
+        print(f"Metrics written to: {metrics_path}")
+    except Exception as e:
+        print(f"Failed to compute metrics: {e}", flush=True)
     return 0
 
 
