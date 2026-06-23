@@ -1,34 +1,34 @@
 # Morale Hybrid Auditor
 
-Repo này chứa bộ công cụ đánh giá an toàn cho AI agent theo hai lớp:
+This repository contains a two-layer safety evaluation stack for AI agents:
 
-- `morale-rust/`: auditor tĩnh bằng Rust, quét skill, chấm rủi ro và sinh báo cáo.
-- `pgdrsa-python/`: harness động bằng Python, chạy skill trong sandbox, ghi trace và benchmark.
+- `morale-rust/`: a Rust-based static auditor that scans skills, scores risk, and produces reports.
+- `pgdrsa-python/`: a Python-based dynamic harness that runs skills in a sandbox, records traces, and benchmarks behavior.
 
-Các tài liệu kết quả thực nghiệm và phân tích nằm ngay ở root repo:
+The main experiment and analysis documents live at the repository root:
 
 - `EVALUATION_AND_TUNING.md`
 - `TUNING_METHODOLOGY.md`
 - `TUNING_RESULTS.md`
 - `DOCUMENTATION_INDEX.md`
 
-## Cần chuẩn bị
+## Prerequisites
 
 - Python 3.10+
 - Rust toolchain + Cargo
 - Podman
-- Một endpoint LLM kiểu OpenAI-compatible cho phần Python benchmark, hoặc Ollama local
+- An OpenAI-compatible LLM endpoint for the Python benchmark, or local Ollama
 
-## Cấu trúc nhanh
+## Quick Layout
 
-- `morale-rust/data/skills/`: corpus skill benign và malicious
-- `morale-rust/src/`: logic audit và risk checker
-- `pgdrsa-python/pgdrsa/`: engine benchmark, sandbox, receiver, judge
-- `pgdrsa-python/scripts/`: script benchmark ngẫu nhiên và file kết quả mẫu
+- `morale-rust/data/skills/`: benign and malicious skill corpus
+- `morale-rust/src/`: audit logic and risk checkers
+- `pgdrsa-python/pgdrsa/`: benchmark engine, sandbox, receiver, judge
+- `pgdrsa-python/scripts/`: random benchmark script and sample result files
 
-## Cách chạy Python benchmark
+## Running the Python Benchmark
 
-Vào thư mục Python trước khi chạy các lệnh dưới đây:
+Change into the Python workspace before running the commands below:
 
 ```bash
 cd pgdrsa-python
@@ -37,7 +37,7 @@ python3 -m venv .venv
 pip install -e ".[dev]"
 ```
 
-### 1. Chạy một skill đơn lẻ
+### 1. Run a Single Skill
 
 ```bash
 . .venv/bin/activate
@@ -47,43 +47,43 @@ export PGDRSA_LLM_MODEL='llama3.1:latest'
 python -m pgdrsa.smoke --skill ../morale-rust/data/skills/benign/076-memory-note
 ```
 
-Lệnh này chạy một skill trong sandbox, thu trace và in JSON kết quả ra terminal.
+This runs one skill inside the sandbox, collects a trace, and prints the JSON result to the terminal.
 
-### 2. Chạy toàn bộ corpus
+### 2. Run the Full Corpus
 
 ```bash
 . .venv/bin/activate
 python -m pgdrsa.run_all --results-file pgdrsa_results.jsonl
 ```
 
-Tuỳ chọn hữu ích:
+Useful options:
 
-- `--limit N`: chỉ chạy N skill đầu tiên
-- `--retry-errors`: chạy lại các skill từng lỗi
-- `--only-bad BASELINE_JSONL`: chỉ chạy những skill lỗi hoặc false negative từ baseline
-- `--image IMAGE`: override image sandbox
+- `--limit N`: run only the first N skills
+- `--retry-errors`: rerun skills that previously failed
+- `--only-bad BASELINE_JSONL`: run only skills that failed or were false negatives in the baseline
+- `--image IMAGE`: override the sandbox image
 
-### 3. Chạy benchmark ngẫu nhiên
+### 3. Run a Random Benchmark Sample
 
 ```bash
 . .venv/bin/activate
 python scripts/run_random_benchmark.py --count 10 --seed 123 --results-file scripts/pgdrsa_random_results.jsonl
 ```
 
-Script này chọn ngẫu nhiên một tập skill từ corpus, chạy từng skill, rồi ghi từng dòng JSONL vào file kết quả. Sau đó script còn tính thêm metrics cơ bản và lưu kèm file `.metrics.json`.
+This script randomly selects a subset of skills from the corpus, runs each one, and writes one JSONL record per run. It also computes basic metrics and writes a companion `.metrics.json` file.
 
-### 4. Xem và phân tích kết quả
+### 4. Inspect and Analyze Results
 
-Các script phân tích đã có sẵn ở root repo:
+Analysis scripts are available at the repository root:
 
 ```bash
 python analyze_tuning_results.py
 python compare_samples.py
 ```
 
-Kết quả benchmark mẫu hiện được lưu trong `pgdrsa-python/scripts/pgdrsa_random_results.jsonl`.
+The sample benchmark output currently lives in `pgdrsa-python/scripts/pgdrsa_random_results.jsonl`.
 
-## Cách chạy Rust auditor
+## Running the Rust Auditor
 
 ```bash
 cd morale-rust
@@ -91,19 +91,19 @@ cargo test
 cargo run -- ../morale-rust/data/skills/benign/076-memory-note
 ```
 
-Binary `morale` nhận một thư mục skill hoặc file `.zip`, rồi chạy audit và in báo cáo theo các flag CLI.
+The `morale` binary accepts either a skill directory or a `.zip` file, then performs the audit and prints a report based on the CLI flags.
 
-Một số flag hay dùng:
+Common flags:
 
-- `--lightweight`: bỏ qua database
-- `--json`: xuất JSON
-- `--summary`: chỉ in tóm tắt
-- `--stats`: xem thống kê rủi ro
-- `--enable_ai`: bật phân tích AI-powered nếu đã cấu hình API key
+- `--lightweight`: skip database operations
+- `--json`: output JSON
+- `--summary`: print a summary only
+- `--stats`: show risk statistics
+- `--enable_ai`: enable AI-powered analysis if an API key is configured
 
 ## Local Ollama
 
-Nếu muốn chạy hoàn toàn local cho phần Python benchmark, cài và khởi động Ollama rồi export các biến môi trường sau:
+If you want to run the Python benchmark fully locally, install and start Ollama, then export the following environment variables:
 
 ```bash
 brew install ollama
@@ -115,17 +115,17 @@ export PGDRSA_LLM_BASE_URL='http://127.0.0.1:11434/v1'
 export PGDRSA_LLM_MODEL='llama3.1:latest'
 ```
 
-## Kết quả và báo cáo
+## Results and Reports
 
-Nếu bạn đang tìm phần mô tả kết quả thực nghiệm, thứ tự đọc khuyến nghị là:
+If you are looking for the experiment writeup, the recommended reading order is:
 
 1. `DOCUMENTATION_INDEX.md`
 2. `PAPER_KNOWLEDGE_BASE.md`
 3. `EVALUATION_AND_TUNING.md`
 4. `TUNING_RESULTS.md`
 
-## Troubleshooting nhanh
+## Troubleshooting
 
-- Nếu gặp lỗi `ModuleNotFoundError: No module named 'openai'`, hãy chắc chắn đã cài đúng môi trường Python với `pip install -e ".[dev]"` trong `pgdrsa-python/`.
-- Nếu benchmark không chạy được do podman/network, kiểm tra lại Podman đã sẵn sàng và image sandbox đã build.
-- Nếu chạy skill nhưng không thấy trace như mong đợi, thử chạy một skill benign trước để kiểm tra pipeline end-to-end.
+- If you see `ModuleNotFoundError: No module named 'openai'`, make sure you installed the Python environment correctly with `pip install -e ".[dev]"` inside `pgdrsa-python/`.
+- If the benchmark fails because of Podman or networking, verify that Podman is running and the sandbox image has been built.
+- If a skill runs but you do not see the expected trace, try a benign skill first to confirm the end-to-end pipeline.
